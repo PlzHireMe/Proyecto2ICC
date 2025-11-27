@@ -7,28 +7,28 @@ import numpy as np
 
 #Dylan
 def cortar_imagenes(img):
-    #Blanco > 150
+    #Blanco > 190
     arriba = 0
     abajo = 0
     izquierda = 0
     derecha = 0
     for fila in img:
-        if np.all(fila > 150): 
+        if np.all(fila > 190): 
             arriba += 1
         else: 
             break
     for fila in img[::-1]:
-        if np.all(fila > 150):
+        if np.all(fila > 190):
             abajo += 1
         else: 
             break
     for columna in img.T:
-        if np.all(columna > 150):
+        if np.all(columna > 190):
             izquierda += 1
         else: 
             break
     for columna in img.T[::-1]:
-        if np.all(columna > 150):
+        if np.all(columna > 190):
             derecha += 1
         else: 
             break
@@ -48,6 +48,36 @@ def cortar_imagenes(img):
     img = np.pad( img,  ((pad_arriba, pad_abajo), (pad_izq, pad_der)),  mode='constant',  constant_values=255)
     return img
 
+def calcularDistancia(lista, listaB):
+    suma = 0
+    for i in range(len(lista)):
+        suma += (listaB[i] - lista[i])**2
+    return round(suma**0.5, 3)
+
+def KNearestNeighbors(datos_clasificar, datos, etiquetas, nVecinos):
+    distancias = []
+    valores = []
+
+    for dato_clasificar in datos_clasificar:
+        distancia = []
+        distancia_sort = []
+        valor = []
+        for dato in datos:
+            distancia.append(calcularDistancia(dato_clasificar, dato))
+        indices = np.argsort(distancia)
+
+        for i in range(nVecinos):
+            distancia_sort.append(float(distancia[indices[i]]))
+            valor.append(int(etiquetas[indices[i]]))
+        distancias.append(distancia_sort)
+        valores.append(valor)
+        
+    return (distancias, valores)
+
+def predict(etiquetas):
+    pred = Counter(etiquetas)
+    return pred.most_common(1)[0][0]
+
 imagenes_clasificar = []
 nombres_imagenes = []
 
@@ -65,43 +95,21 @@ for archivo in glob.glob("imagenes/*.*"):
     imagenes_clasificar.append(img.flatten())
 
 #Clasificar
-#Matias
+#Dylan
 
 digitos = datasets.load_digits()
-KNN = KNeighborsClassifier(n_neighbors=3)
-KNN.fit(digitos.data, digitos.target)
 
-distancias, indices = KNN.kneighbors(imagenes_clasificar, n_neighbors=3)
+distancia, valores = KNearestNeighbors(imagenes_clasificar, digitos.data, digitos.target, 3)
 #Indices es una matriz N x 3
 
-'''e) Para cada número nuevo, imprima los targets que corresponden los 3 dígitos más
-parecidos a él. Además, indique qué número es realmente. Así podremos tener en
-pantalla su etiqueta verdadera, y los target de los 3 vecinos más cercanos./'''
-
-'''f) Intente clasificar a sus nuevos dígitos:'''
-
-
 for i in range(len(imagenes_clasificar)):
-    print("Imagen", nombres_imagenes[i][9:10], "tiene como targets:", digitos.target[indices[i]])
-    
-    if digitos.target[indices[i]][0] == digitos.target[indices[i]][1] or digitos.target[indices[i]][0] == digitos.target[indices[i]][2]:
-        X = digitos.target[indices[i]][0]
-    elif digitos.target[indices[i]][1] == digitos.target[indices[i]][2]:
-        X = digitos.target[indices[i]][1]
-        
-    #Si no, escogemos al de menor distancia
-    indice_menor_distancia = np.argmin(distancias[i])
-    X = digitos.target[indices[i][indice_menor_distancia]]
-
-    
+    print("Imagen", nombres_imagenes[i][9:10], "tiene como targets:", valores[i])
+    X = predict(valores[i])
     print('"Soy la inteligencia artificial, y he detectado que el dígito ingresado corresponde al número', X, '”, donde', X, 'es un número entre 0 y 9.')
+
 
 #Matriz Confusion
 #Alejandro
-
-
-
-
 
 
 
