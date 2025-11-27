@@ -2,6 +2,7 @@ import cv2
 import glob
 from sklearn import datasets
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix
 from collections import Counter
 import numpy as np
 
@@ -52,7 +53,7 @@ def calcularDistancia(lista, listaB):
     suma = 0
     for i in range(len(lista)):
         suma += (listaB[i] - lista[i])**2
-    return round(suma**0.5, 3)
+    return suma**0.5
 
 def KNearestNeighbors(datos_clasificar, datos, etiquetas, nVecinos):
     distancias = []
@@ -102,14 +103,25 @@ digitos = datasets.load_digits()
 distancia, valores = KNearestNeighbors(imagenes_clasificar, digitos.data, digitos.target, 3)
 #Indices es una matriz N x 3
 
+Reales = []
+Predecidos = []
+
 for i in range(len(imagenes_clasificar)):
+    print()
+    print(np.array(imagenes_clasificar[i]).reshape(8, 8))
     print("Imagen", nombres_imagenes[i][9:10], "tiene como targets:", valores[i])
     X = predict(valores[i])
+    Reales.append(int(nombres_imagenes[i][9:10]))
+    Predecidos.append(X)
     print('"Soy la inteligencia artificial, y he detectado que el dígito ingresado corresponde al número', X, '”, donde', X, 'es un número entre 0 y 9.')
 
 
 #Matriz Confusion
 #Alejandro
+
+MatrizConfusion10Class = confusion_matrix(Reales, Predecidos, labels=list(range(10)))
+print("\n", MatrizConfusion10Class)
+
 
 
 
