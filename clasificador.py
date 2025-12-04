@@ -2,52 +2,11 @@ import cv2
 import glob
 from sklearn import datasets
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, accuracy_score
 from collections import Counter
 import numpy as np
 
 #Dylan
-def cortar_imagenes(img):
-    #Blanco > 190
-    arriba = 0
-    abajo = 0
-    izquierda = 0
-    derecha = 0
-    for fila in img:
-        if np.all(fila > 190): 
-            arriba += 1
-        else: 
-            break
-    for fila in img[::-1]:
-        if np.all(fila > 190):
-            abajo += 1
-        else: 
-            break
-    for columna in img.T:
-        if np.all(columna > 190):
-            izquierda += 1
-        else: 
-            break
-    for columna in img.T[::-1]:
-        if np.all(columna > 190):
-            derecha += 1
-        else: 
-            break
-
-    img = img[arriba : img.shape[0] - abajo, izquierda : img.shape[1] - derecha]
-    alto, ancho = img.shape[:2]
-    lado = max(alto, ancho)
-    pad_alto = lado - alto
-    pad_ancho = lado - ancho
-
-    pad_arriba = pad_alto // 2
-    pad_abajo = pad_alto - pad_arriba 
-
-    pad_izq = pad_ancho // 2
-    pad_der = pad_ancho - pad_izq      
-
-    img = np.pad( img,  ((pad_arriba, pad_abajo), (pad_izq, pad_der)),  mode='constant',  constant_values=255)
-    return img
 
 def calcularDistancia(lista, listaB):
     suma = 0
@@ -88,7 +47,6 @@ nombres_imagenes = []
 for archivo in glob.glob("imagenes/*.*"):
     img = cv2.imread(archivo, cv2.IMREAD_GRAYSCALE)
     nombres_imagenes.append(archivo)
-    img = cortar_imagenes(img)
     img = cv2.resize(img, (8, 8))
     for i in range(8):
         for j in range(8):
@@ -107,8 +65,6 @@ Reales = []
 Predecidos = []
 
 for i in range(len(imagenes_clasificar)):
-    print()
-    print(np.array(imagenes_clasificar[i]).reshape(8, 8))
     print("Imagen", nombres_imagenes[i][9:10], "tiene como targets:", valores[i])
     X = predict(valores[i])
     Reales.append(int(nombres_imagenes[i][9:10]))
@@ -121,6 +77,36 @@ for i in range(len(imagenes_clasificar)):
 
 MatrizConfusion10Class = confusion_matrix(Reales, Predecidos, labels=list(range(10)))
 print("\n", MatrizConfusion10Class)
+
+# Matriz de Confusión de 2 Clases para cada número del 1 al 9
+print("\n===== MATRICES DE CONFUSIÓN DE 2 CLASES (CADA NÚMERO vs OTROS) =====\n")
+
+for numero in range(1, 10):
+    # Convertir a 2 clases: 1 si es el número, 0 si es otro
+    Reales_2Clases = [1 if x == numero else 0 for x in Reales]
+    Predecidos_2Clases = [1 if x == numero else 0 for x in Predecidos]
+    
+    MatrizConfusion2Class = confusion_matrix(Reales_2Clases, Predecidos_2Clases, labels=[0, 1])
+    
+    print(f"NÚMERO {numero}:")
+    print(f"Clase 0: No es {numero} | Clase 1: Es {numero}")
+    print("Matriz de Confusión:")
+    print(MatrizConfusion2Class)
+    print(f"TN: {MatrizConfusion2Class[0, 0]} | FP: {MatrizConfusion2Class[0, 1]}")
+    print(f"FN: {MatrizConfusion2Class[1, 0]} | TP: {MatrizConfusion2Class[1, 1]}")
+    
+    # Calcular métricas
+    precision = precision_score(Reales_2Clases, Predecidos_2Clases, zero_division=0)
+    recall = recall_score(Reales_2Clases, Predecidos_2Clases, zero_division=0)
+    f1 = f1_score(Reales_2Clases, Predecidos_2Clases, zero_division=0)
+    accuracy = accuracy_score(Reales_2Clases, Predecidos_2Clases)
+    
+    print(f"\nMétricas:")
+    print(f"Precisión: {precision:.4f}")
+    print(f"Recall (Sensibilidad): {recall:.4f}")
+    print(f"F1-Score: {f1:.4f}")
+    print(f"Exactitud: {accuracy:.4f}")
+    print()
 
 
 
